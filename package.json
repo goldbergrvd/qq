@@ -1,0 +1,10 @@
+{
+    "name": "qq",
+    "description": "Simple dom dancer library.",
+    "author": {
+        "name": "Hubert",
+        "email": "goldbergrvd@gmail.com"
+    },
+    "main": "qq.js",
+    "version": "0.1.1"
+}
