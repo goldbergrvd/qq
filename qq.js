@@ -23,6 +23,7 @@
     this.length = 0;
     this.target = target;
     this.context = ctx;
+    this.evt = {};
 
     if (ctx) {
       if (querySelectableEles.indexOf(ctx.nodeType) !== -1 ||
@@ -126,6 +127,7 @@
         }
       }
     }
+    return this;
   };
 
   qq.fn.rmAtts = function (atts) {
@@ -133,6 +135,7 @@
     atts.forEach(function (att) {
       that.each(function (ele) { ele.removeAttribute(att); });
     });
+    return this;
   };
 
   qq.fn.datas = function () {
@@ -141,7 +144,7 @@
     if (args.length == 2) { // key, value
       val = args[1];
       if (typeof val === 'function') {
-        this.each(function (ele) { ele.dataset[args[0]] = val(ele); });
+        this.each(function (ele, i) { ele.dataset[args[0]] = val(ele, i); });
       } else {
         this.each(function (ele) { ele.dataset[args[0]] = val; });
       }
@@ -149,12 +152,13 @@
       for (var key in args[0]) {
         val = args[0][key];
         if (typeof val === 'function') {
-          this.each(function (ele) { ele.dataset[key] = val(ele); });
+          this.each(function (ele, i) { ele.dataset[key] = val(ele, i); });
         } else {
           this.each(function (ele) { ele.dataset[key] = val; });
         }
       }
     }
+    return this;
   };
 
   qq.fn.rmDatas = function (datas) {
@@ -162,6 +166,52 @@
     datas.forEach(function (data) {
       that.each(function (ele) { delete ele.dataset[data]; });
     });
+    return this;
+  };
+
+  qq.fn.text = function (strOrNum) {
+    if (strOrNum) {
+      if (typeof strOrNum === 'function') {
+        this.each(function (ele, i) { ele.textContent = strOrNum(ele, i); });
+        return this;
+      } else if (typeof strOrNum === 'string') {
+        this.each(function (ele) { ele.textContent = strOrNum; });
+        return this;
+      } else {
+        try {
+          return this[strOrNum].textContent;
+        } catch (e) {
+          return '';
+        }
+      }
+    } else {
+      return this.map(function (ele) { return ele.textContent; });
+    }
+  };
+
+  qq.fn.on = function (evtName, evtTag, evtCallback) {
+    if (this.evt[evtName]) {
+      if (this.evt[evtName][evtTag]) {
+        throw new Error('Event ' + evtName + ' with tag ' + evtTag + ' has already binded.');
+      }
+    } else {
+      this.evt[evtName] = {};
+    }
+    this.evt[evtName][evtTag] = evtCallback;
+    this.each(function (ele) { ele.addEventListener(evtName, evtCallback, false) });
+  };
+
+  qq.fn.off = function (evtName, evtTagOrCallback) {
+    var evt = evtTagOrCallback;
+    if (typeof evt !== 'function') {
+      if (this.evt[evtName] && this.evt[evtName][evtTagOrCallback]) {
+        evt = this.evt[evtName][evtTagOrCallback];
+        delete this.evt[evtName][evtTagOrCallback];
+      } else {
+        throw new Error('No such event ' + evtName + ' with tag ' + evtTagOrCallback + ' in this Q_Q object.');
+      }
+    }
+    this.each(function (ele) { ele.removeEventListener(evtName, evt, false); });
   };
 
 }(this));
