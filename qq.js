@@ -203,7 +203,7 @@
       this.evt[evtName] = {};
     }
     this.evt[evtName][evtTag] = evtCallback;
-    this.each(function (ele) { ele.addEventListener(evtName, evtCallback, false) });
+    return this.each(function (ele) { ele.addEventListener(evtName, evtCallback, false) });
   };
 
   qq.fn.off = function (evtName, evtTagOrCallback) {
@@ -216,7 +216,7 @@
         throw new Error('No such event ' + evtName + ' with tag ' + evtTagOrCallback + ' in this Q_Q object.');
       }
     }
-    this.each(function (ele) { ele.removeEventListener(evtName, evt, false); });
+    return this.each(function (ele) { ele.removeEventListener(evtName, evt, false); });
   };
 
   qq.fn.before = function (nodeOrNodeBuilder) {
@@ -229,6 +229,7 @@
         ele.parentNode.insertBefore(nodeOrNodeBuilder(ele, i), ele);
       });
     }
+    return this;
   };
 
   qq.fn.after = function (nodeOrNodeBuilder) {
@@ -251,6 +252,7 @@
         }
       });
     }
+    return this;
   };
 
   qq.fn.remove = function() {
