@@ -39,7 +39,12 @@
     if (typeof target === 'string') {
       // html syntax
       if (htmlRegex.test(target)) {
-        throw new Error("HTML syntax not support currently.")
+        var divEle = doc.createElement('div');
+        var docFrag = doc.createDocumentFragment();
+        docFrag.appendChild(divEle);
+        var queryDiv = docFrag.querySelector('div');
+        queryDiv.innerHTML = target;
+        pushNodes(queryDiv.children, this);
 
       // suppose it is css selector
       } else {
@@ -212,6 +217,44 @@
       }
     }
     this.each(function (ele) { ele.removeEventListener(evtName, evt, false); });
+  };
+
+  qq.fn.before = function (nodeOrNodeBuilder) {
+    if (nodeOrNodeBuilder instanceof HTMLElement) {
+      this.each(function (ele) {
+        ele.parentNode.insertBefore(nodeOrNodeBuilder.cloneNode(true), ele);
+      });
+    } else {
+      this.each(function (ele, i) {
+        ele.parentNode.insertBefore(nodeOrNodeBuilder(ele, i), ele);
+      });
+    }
+  };
+
+  qq.fn.after = function (nodeOrNodeBuilder) {
+    if (nodeOrNodeBuilder instanceof HTMLElement) {
+      this.each(function (ele) {
+        var nextEleSibling = ele.nextElementSibling;
+        if (nextEleSibling == null) {
+          ele.parentNode.appendChild(nodeOrNodeBuilder.cloneNode(true));
+        } else {
+          ele.parentNode.insertBefore(nodeOrNodeBuilder.cloneNode(true), nextEleSibling);
+        }
+      });
+    } else {
+      this.each(function (ele, i) {
+        var nextEleSibling = ele.nextElementSibling;
+        if (nextEleSibling == null) {
+          ele.parentNode.appendChild(nodeOrNodeBuilder(ele, i));
+        } else {
+          ele.parentNode.insertBefore(nodeOrNodeBuilder(ele, i), nextEleSibling);
+        }
+      });
+    }
+  };
+
+  qq.fn.remove = function() {
+    this.each(function (ele) { ele.parentNode.removeChild(ele); });
   };
 
 }(this));
