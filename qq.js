@@ -1,7 +1,7 @@
 (function(global) {
   var doc = global.document,
       arr = Array.prototype,
-      htmlRegex = /^\s*<([a-zA-Z0-9]+)>.*<\/\1>\s*$/,
+      htmlRegex = /^\s*<([a-zA-Z0-9]+)(?: .*)>.*<\/\1>\s*$/,
       querySelectableEles = [doc.ELEMENT_NODE, doc.DOCUMENT_NODE, doc.DOCUMENT_FRAGMENT_NODE],
       qq = function (target, ctx) {
         if (!target) throw new Error("Please indicate target dom rule by first parameter!");
@@ -219,36 +219,57 @@
     return this.each(function (ele) { ele.removeEventListener(evtName, evt, false); });
   };
 
-  qq.fn.before = function (nodeOrNodeBuilder) {
-    if (nodeOrNodeBuilder instanceof HTMLElement) {
+  qq.fn.before = function (strOrEleOrCb) {
+    if (typeof strOrEleOrCb === 'string') {
       this.each(function (ele) {
-        ele.parentNode.insertBefore(nodeOrNodeBuilder.cloneNode(true), ele);
+        ele.parentNode.insertBefore(qq(strOrEleOrCb)[0], ele);
+      });
+    } else if (strOrEleOrCb instanceof HTMLElement) {
+      this.each(function (ele) {
+        ele.parentNode.insertBefore(strOrEleOrCb.cloneNode(true), ele);
       });
     } else {
       this.each(function (ele, i) {
-        ele.parentNode.insertBefore(nodeOrNodeBuilder(ele, i), ele);
+        var result = strOrEleOrCb(ele, i);
+        if (result) {
+          if (typeof result === 'string') {
+            ele.parentNode.insertBefore(qq(result)[0], ele);
+          } else {
+            ele.parentNode.insertBefore(result, ele);
+          }
+        }
       });
     }
     return this;
   };
 
-  qq.fn.after = function (nodeOrNodeBuilder) {
-    if (nodeOrNodeBuilder instanceof HTMLElement) {
+  qq.fn.after = function (strOrEleOrCb) {
+    function appendEleAfterTarget(ele, target) {
+      var nextEleSibling = target.nextElementSibling;
+      if (nextEleSibling == null) {
+        target.parentNode.appendChild(ele);
+      } else {
+        target.parentNode.insertBefore(ele, nextEleSibling);
+      }
+    }
+
+    if (typeof strOrEleOrCb === 'string') {
       this.each(function (ele) {
-        var nextEleSibling = ele.nextElementSibling;
-        if (nextEleSibling == null) {
-          ele.parentNode.appendChild(nodeOrNodeBuilder.cloneNode(true));
-        } else {
-          ele.parentNode.insertBefore(nodeOrNodeBuilder.cloneNode(true), nextEleSibling);
-        }
+        appendEleAfterTarget(qq(strOrEleOrCb)[0], ele);
+      });
+    } else if (strOrEleOrCb instanceof HTMLElement) {
+      this.each(function (ele) {
+        appendEleAfterTarget(strOrEleOrCb.cloneNode(true), ele);
       });
     } else {
       this.each(function (ele, i) {
-        var nextEleSibling = ele.nextElementSibling;
-        if (nextEleSibling == null) {
-          ele.parentNode.appendChild(nodeOrNodeBuilder(ele, i));
-        } else {
-          ele.parentNode.insertBefore(nodeOrNodeBuilder(ele, i), nextEleSibling);
+        var result = strOrEleOrCb(ele, i);
+        if (result) {
+          if (typeof result === 'string') {
+            appendEleAfterTarget(qq(result)[0], ele);
+          } else {
+            appendEleAfterTarget(result, ele);
+          }
         }
       });
     }
