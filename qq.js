@@ -1,7 +1,6 @@
 (function(global) {
   var doc = global.document,
       arr = Array.prototype,
-      htmlRegex = /^\s*<([a-zA-Z0-9]+)(?: .*)>.*<\/\1>\s*$/,
       querySelectableEles = [doc.ELEMENT_NODE, doc.DOCUMENT_NODE, doc.DOCUMENT_FRAGMENT_NODE],
       qq = function (target, ctx) {
         if (!target) throw new Error("Please indicate target dom rule by first parameter!");
@@ -25,6 +24,10 @@
     this.context = ctx;
     this.evt = {};
 
+    if (target === undefined) {
+      return this;
+    }
+
     if (ctx) {
       if (querySelectableEles.indexOf(ctx.nodeType) !== -1 ||
           ctx instanceof NodeList ||
@@ -37,23 +40,27 @@
     }
 
     if (typeof target === 'string') {
-      // html syntax
-      if (htmlRegex.test(target)) {
-        var divEle = doc.createElement('div');
-        var docFrag = doc.createDocumentFragment();
-        docFrag.appendChild(divEle);
-        var queryDiv = docFrag.querySelector('div');
-        queryDiv.innerHTML = target;
-        pushNodes(queryDiv.children, this);
 
       // suppose it is css selector
-      } else {
+      try {
         if (currCtx.length) {
           arr.forEach.call(currCtx, function (eachCtx) {
             pushNodes(eachCtx.querySelectorAll(target), that);
           });
         } else {
           pushNodes(currCtx.querySelectorAll(target), this);
+        }
+
+      } catch (e) {
+
+        // suppose it is html selector
+        if (e.name === 'SyntaxError') {
+          var divEle = doc.createElement('div');
+          var docFrag = doc.createDocumentFragment();
+          docFrag.appendChild(divEle);
+          var queryDiv = docFrag.querySelector('div');
+          queryDiv.innerHTML = target;
+          pushNodes(queryDiv.children, this);
         }
       }
       return this;
@@ -80,6 +87,12 @@
 
   qq.fn.map = function (callback) {
     return arr.map.call(this, callback);
+  };
+
+  qq.fn.filter = function (callback) {
+    var result = new Q_Q();
+    pushNodes(arr.filter.call(this, callback), result);
+    return result;
   };
 
   qq.fn.addClass = function () {
@@ -174,20 +187,21 @@
     return this;
   };
 
-  qq.fn.text = function (strOrNum) {
-    if (strOrNum) {
-      if (typeof strOrNum === 'function') {
-        this.each(function (ele, i) { ele.textContent = strOrNum(ele, i); });
-        return this;
-      } else if (typeof strOrNum === 'string') {
-        this.each(function (ele) { ele.textContent = strOrNum; });
-        return this;
-      } else {
-        try {
-          return this[strOrNum].textContent;
-        } catch (e) {
-          return '';
-        }
+  qq.fn.text = function (strOrNumOrCb) {
+    if (strOrNumOrCb) {
+      switch (typeof strOrNumOrCb) {
+        case 'function':
+          this.each(function (ele, i) { ele.textContent = strOrNumOrCb(ele, i); });
+          return this;
+        case 'string':
+          this.each(function (ele) { ele.textContent = strOrNumOrCb; });
+          return this;
+        default:
+          try {
+            return this[strOrNumOrCb].textContent;
+          } catch (e) {
+            return '';
+          }
       }
     } else {
       return this.map(function (ele) { return ele.textContent; });
@@ -274,6 +288,23 @@
       });
     }
     return this;
+  };
+
+  qq.fn.html = function (htmlOrNumOrCb) {
+    switch (typeof htmlOrNumOrCb) {
+      case 'string':
+        this.each(function (ele, i) {
+          ele.innerHTML = htmlOrNumOrCb;
+        });
+        return this;
+      case 'function':
+        this.each(function (ele, i) {
+          ele.innerHTML = htmlOrNumOrCb(ele, i);
+        });
+        return this;
+      case 'number':
+        return this[htmlOrNumOrCb].innerHTML;
+    }
   };
 
   qq.fn.remove = function() {
