@@ -307,6 +307,46 @@
     }
   };
 
+  qq.fn.insertAt = function (index, htmlOrCb) {
+    this.each(function (ele, i) {
+      var content = '',
+          children = ele.children,
+          position;
+      switch (typeof htmlOrCb) {
+        case 'string':
+          content = htmlOrCb;
+          break;
+        case 'function':
+          content = htmlOrCb(ele, i);
+          break;
+      }
+
+      if (children.length) {
+        if (index >= 0) {
+          if (index > children.length - 1) {
+            ele.insertAdjacentHTML('beforeend', content);
+          } else {
+            children[index].insertAdjacentHTML('beforebegin', content);
+          }
+        } else {
+          position = children.length + index;
+          if (position >= 0) {
+            children[position].insertAdjacentHTML('afterend', content);
+          } else {
+            ele.insertAdjacentHTML('afterbegin', content);
+          }
+        }
+      } else {
+        if (index >= 0) {
+          ele.insertAdjacentHTML('afterbegin', content);
+        } else {
+          ele.insertAdjacentHTML('beforeend', content);
+        }
+      }
+    });
+    return this;
+  }
+
   qq.fn.remove = function() {
     this.each(function (ele) { ele.parentNode.removeChild(ele); });
   };
